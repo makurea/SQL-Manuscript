@@ -1,4 +1,4 @@
-# Resources and Literature on Software Testing and Quality Assurance
+# Resources and Literature on Databases and SQL
 
 В этом репозитории собраны материалы для обучения работе с базами данных и языком SQL, включая теорию и практические примеры.
 
