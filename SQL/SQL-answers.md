@@ -398,3 +398,271 @@ ORDER BY count DESC;
 ```
 
 ---
+
+31. Вывести всех членов семьи с фамилией Quincey. 
+
+
+```mysql
+SELECT *
+FROM FamilyMembers
+WHERE member_name LIKE '% Quincey';
+```
+
+---
+
+32. Вывести средний возраст людей (в годах), хранящихся в базе данных. Результат округлите до целого в меньшую сторону.
+
+
+```mysql
+SELECT FLOOR(
+               AVG(TIMESTAMPDIFF(YEAR, birthday, CURRENT_TIMESTAMP))
+           ) AS age
+FROM FamilyMembers;
+```
+
+---
+
+33. Найдите среднюю стоимость икры. В базе данных хранятся данные о покупках красной (red caviar) и черной икры (black 
+caviar).
+
+
+```mysql
+SELECT AVG(unit_price) AS cost
+FROM Payments ps
+         JOIN Goods gs ON ps.good = gs.good_id
+WHERE good_name = 'red caviar'
+   OR good_name = 'black caviar';
+```
+
+---
+
+34. Сколько всего 10-ых классов 
+
+
+```mysql
+SELECT COUNT(name) AS count
+FROM Class
+WHERE name LIKE '10 %';
+```
+
+---
+
+35. Сколько различных кабинетов школы использовались 2.09.2019 в образовательных целях ? 
+
+
+```mysql
+SELECT COUNT(DISTINCT classroom) AS count
+FROM Student_in_class sc
+         JOIN Class cl ON sc.class = cl.id
+         JOIN Schedule sh ON sh.class = cl.id
+WHERE DATE_FORMAT(date, '%e.%m.%Y') = '2.09.2019';
+```
+
+---
+
+36. Выведите информацию об обучающихся живущих на улице Пушкина (ul. Pushkina)? 
+
+
+```mysql
+SELECT *
+FROM Student
+WHERE address RLIKE 'Pushkina';
+```
+
+---
+
+37. Сколько лет самому молодому обучающемуся ? 
+
+
+```mysql
+SELECT TIMESTAMPDIFF(YEAR, birthday, CURRENT_TIMESTAMP) AS year
+FROM Student
+ORDER BY year ASC
+LIMIT 1;
+```
+
+---
+
+38. Сколько Анн (Anna) учится в школе ? 
+
+
+```mysql
+SELECT COUNT(*) AS count
+FROM Student
+WHERE first_name = 'Anna';
+```
+
+---
+
+39. Сколько обучающихся в 10 B классе ?
+
+
+```mysql
+SELECT COUNT(*) AS count
+FROM Student_in_class sc
+         JOIN Class cl ON sc.class = cl.id
+WHERE name = '10 B';
+```
+
+---
+
+40. Выведите название предметов, которые преподает Ромашкин П.П. (Romashkin P.P.) ? 
+
+
+```mysql
+SELECT name AS subjects
+FROM Subject sj
+         JOIN Schedule sc ON sj.id = sc.subject
+         JOIN Teacher tc ON tc.id = sc.teacher
+WHERE last_name = 'Romashkin'
+  AND first_name LIKE 'P%'
+  AND middle_name LIKE 'P%';
+```
+
+---
+
+41. Во сколько начинается 4-ый учебный предмет по расписанию ? 
+
+
+```mysql
+SELECT start_pair
+FROM Timepair
+WHERE id = 4;
+```
+
+---
+
+42. Сколько времени обучающийся будет находиться в школе, учась со 2-го по 4-ый уч. предмет?
+
+
+```mysql
+SELECT TIMEDIFF(MAX(end_pair), MIN(start_pair)) AS time
+FROM Timepair
+WHERE id BETWEEN 2 AND 4;
+```
+
+---
+
+43. Выведите фамилии преподавателей, которые ведут физическую культуру (Physical Culture). Отсортируйте преподавателей 
+по фамилии в алфавитном порядке. 
+
+
+```mysql
+SELECT last_name
+FROM Teacher tc
+         JOIN Schedule sc ON tc.id = sc.teacher
+         JOIN Subject sj ON sj.id = sc.subject
+WHERE name = 'Physical Culture'
+ORDER BY last_name;
+```
+
+---
+
+44. Найдите максимальный возраст (колич. лет) среди обучающихся 10 классов ? 
+
+
+```mysql
+SELECT TIMESTAMPDIFF(YEAR, birthday, CURRENT_TIMESTAMP) AS max_year
+FROM Student st
+         JOIN Student_in_class sc ON sc.student = st.id
+         JOIN Class cl ON cl.id = sc.class
+WHERE name LIKE '10 %'
+ORDER BY max_year DESC
+LIMIT 1;
+```
+
+---
+
+45. Какие кабинеты чаще всего использовались для проведения занятий? Выведите те, которые использовались максимальное 
+количество раз. 
+
+
+```mysql
+SELECT classroom
+FROM Schedule
+GROUP BY classroom
+HAVING count(classroom) = (
+    SELECT COUNT(*) AS count
+    FROM Schedule
+    GROUP BY classroom
+    ORDER BY count DESC
+    LIMIT 1
+);
+```
+
+---
+
+46. В каких классах введет занятия преподаватель "Krauze" ? 
+
+
+```mysql
+SELECT name
+FROM Schedule sc
+         JOIN Teacher tc ON tc.id = sc.teacher
+         JOIN Class cl ON cl.id = sc.class
+WHERE last_name = 'Krauze'
+GROUP BY name;
+```
+
+---
+
+47. Сколько занятий провел Krauze 30 августа 2019 г.? 
+
+
+```mysql
+SELECT COUNT(*) AS count
+FROM Schedule sc
+         JOIN Teacher tc ON tc.id = sc.teacher
+WHERE DATE_FORMAT(date, '%e %M %Y') = '30 August 2019'
+  AND last_name = 'Krauze';
+```
+
+---
+
+48. Выведите заполненность классов в порядке убывания 
+
+
+```mysql
+SELECT name,
+       COUNT(student) AS count
+FROM Class cl
+         JOIN Student_in_class sc ON sc.class = cl.id
+GROUP BY name
+ORDER BY count DESC;
+```
+
+---
+
+49. Какой процент обучающихся учится в "10 A" классе? Выведите ответ в диапазоне от 0 до 100 без округления, например, 
+96.0201.
+
+
+```mysql
+SELECT COUNT(*) * 100 / (
+    SELECT COUNT(*)
+    FROM Student_in_class
+) AS percent
+FROM Student_in_class sc
+         JOIN Class cs ON cs.id = sc.class
+WHERE name = '10 A';
+```
+
+---
+
+50. Какой процент обучающихся родился в 2000 году? Результат округлить до целого в меньшую сторону. 
+
+
+```mysql
+SELECT FLOOR(
+                       COUNT(*) * 100 / (
+                   SELECT COUNT(*)
+                   FROM Student_in_class
+               )
+           ) AS percent
+FROM Student_in_class sc
+         JOIN Student st ON st.id = sc.student
+WHERE YEAR(birthday) = 2000;
+```
+
+---
+
