@@ -1122,7 +1122,7 @@ FROM Rooms;
 
 ---
 
-80. Создайте представление «Verified_Users» с полями id, name и email, которое будет показывает только тех 
+😎80. Создайте представление «Verified_Users» с полями id, name и email, которое будет показывает только тех 
 пользователей, у которых подтвержден адрес электронной почты.
 
 
@@ -1134,3 +1134,79 @@ WHERE email_verified_at IS NOT NULL;
 ```
 
 ---
+
+93. Какой средний возраст клиентов, купивших Smartwatch (использовать наименование товара product.name) в 2024 году?
+
+
+```mysql
+SELECT AVG(CAST(Customer.age AS FLOAT)) AS average_age
+FROM Customer
+	JOIN Purchase ON Customer.customer_key = Purchase.customer_key
+	JOIN Product ON Purchase.product_key = Product.product_key
+WHERE Purchase.date >= '2024-01-01'
+	AND Purchase.date < '2025-01-01'
+	AND Product.name = 'Smartwatch';
+```
+
+---
+
+99. Посчитай доход с женской аудитории (доход = сумма(price * items)). Обратите внимание, что в таблице женская аудитория имеет поле user_gender «female» или «f».
+
+
+```mysql
+SELECT SUM(price * items) AS income_from_female
+FROM Purchases
+WHERE user_gender IN ('f', 'female');
+```
+
+---
+
+103. Вывести список имён сотрудников, получающих большую заработную плату, чем у непосредственного руководителя.
+
+
+```mysql
+SELECT e1.name
+FROM Employee e1
+JOIN Employee e2 ON e1.chief_id = e2.id
+WHERE e1.salary > e2.salary;
+```
+
+---
+
+109. Выведите название страны, где находится город «Salzburg»
+
+
+```mysql
+SELECT c.name AS country_name
+FROM Countries c
+	JOIN Regions r ON c.id = r.countryid
+	JOIN Cities c2 ON r.id = c2.regionid
+WHERE c2.name = "Salzburg"
+```
+
+---
+
+114. Напишите запрос, который выведет имена пилотов, которые в качестве второго пилота (second_pilot_id) в августе 2023 года летали в New York
+
+
+```mysql
+SELECT DISTINCT name
+FROM Pilots p
+	JOIN Flights f ON f.second_pilot_id = p.pilot_id
+WHERE f.destination = 'New York'
+	AND EXTRACT(
+		YEAR
+		FROM f.flight_date
+	) = 2023
+	AND EXTRACT(
+		MONTH
+		FROM f.flight_date
+	) = 8;
+```
+
+---
+
+
+
+
+
