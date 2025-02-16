@@ -666,3 +666,151 @@ WHERE YEAR(birthday) = 2000;
 
 ---
 
+51. Добавьте товар с именем "Cheese" и типом "food" в список товаров (Goods). 
+
+
+```mysql
+INSERT INTO Goods
+SET good_id   = (
+    SELECT COUNT(*) + 1
+    FROM Goods AS gs
+),
+    good_name = 'Cheese',
+    type      = (
+        SELECT good_type_id
+        FROM GoodTypes
+        WHERE good_type_name = 'food'
+    );
+```
+
+---
+
+52. Добавьте в список типов товаров (GoodTypes) новый тип "auto".
+
+
+```mysql
+INSERT INTO GoodTypes
+SET good_type_id   = (
+    SELECT COUNT(*) + 1
+    FROM GoodTypes AS gt
+),
+    good_type_name = 'auto';
+```
+
+---
+
+53. Измените имя "Andie Quincey" на новое "Andie Anthony". 
+
+
+```mysql
+UPDATE FamilyMembers
+SET member_name = 'Andie Anthony'
+WHERE member_name = 'Andie Quincey';
+```
+
+---
+
+54. Удалить всех членов семьи с фамилией "Quincey". 
+
+
+```mysql
+DELETE
+FROM FamilyMembers
+WHERE member_name LIKE '% Quincey';
+```
+
+---
+
+55. Удалить компании, совершившие наименьшее количество рейсов. 
+
+
+```mysql
+DELETE
+FROM company
+WHERE id IN (
+    SELECT company
+    FROM trip
+    GROUP BY company
+    HAVING COUNT(*) = (
+        SELECT COUNT(*) AS count
+        FROM trip
+        GROUP BY company
+        ORDER BY count
+        LIMIT 1
+    )
+);
+```
+
+---
+
+56. Удалить все перелеты, совершенные из Москвы (Moscow). 
+
+
+```mysql
+DELETE
+FROM trip
+WHERE town_from = 'Moscow';
+```
+
+---
+
+57. Перенести расписание всех занятий на 30 мин. вперед. 
+
+
+```mysql
+UPDATE Timepair
+SET start_pair = ADDTIME(start_pair, '00:30:00'),
+    end_pair   = ADDTIME(end_pair, '00:30:00');
+```
+
+---
+
+58. Добавить отзыв с рейтингом 5 на жилье, находящиеся по адресу "11218, Friel Place, New York", от имени "George 
+Clooney" 
+
+
+```mysql
+INSERT INTO Reviews
+SET id             = (
+    SELECT COUNT(*) + 1
+    FROM Reviews rw
+),
+    reservation_id = (
+        SELECT rs.id
+        FROM Reservations rs
+                 JOIN Rooms rm ON rm.id = rs.room_id
+                 JOIN Users us ON rs.user_id = us.id
+        WHERE address = '11218, Friel Place, New York'
+          AND name = 'George Clooney'
+    ),
+    rating         = 5;
+```
+
+---
+
+59. Вывести пользователей,указавших Белорусский номер телефона ? Телефонный код Белоруссии +375. 
+
+
+```mysql
+SELECT *
+FROM Users
+WHERE phone_number LIKE '+375 %';
+```
+
+---
+
+60. Выведите идентификаторы преподавателей, которые хотя бы один раз за всё время преподавали в каждом из одиннадцатых 
+классов. 
+
+
+```mysql
+SELECT teacher
+FROM Schedule sc
+         JOIN Class cl ON sc.class = cl.id
+WHERE name LIKE '11 %'
+GROUP BY teacher
+HAVING COUNT(DISTINCT name) = 2;
+```
+
+---
+
