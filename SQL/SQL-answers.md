@@ -226,7 +226,7 @@ LIMIT 1;
 
 ---
 
-19. Определить, кто из членов семьи покупал картошку (potato) [(сайт)](https://sql-academy.org/ru/trainer/tasks/19)
+19. Определить, кто из членов семьи покупал картошку (potato) 
 
 
 ```mysql
@@ -253,6 +253,148 @@ FROM FamilyMembers fm
          JOIN GoodTypes gt ON gs.type = gt.good_type_id
 WHERE good_type_name = 'entertainment'
 GROUP BY status, member_name;
+```
+
+---
+
+21. Определить товары, которые покупали более 1 раза 
+
+
+```mysql
+SELECT good_name
+FROM Goods gs
+         JOIN Payments ps ON gs.good_id = ps.good
+GROUP BY good
+HAVING COUNT(*) > 1;
+```
+
+---
+
+22. Найти имена всех матерей 
+
+
+```mysql
+SELECT member_name
+FROM FamilyMembers
+WHERE status = 'mother';
+```
+
+---
+
+23. Найдите самый дорогой деликатес (delicacies) и выведите его цену  
+
+
+```mysql
+SELECT good_name,
+       unit_price
+FROM Goods gs
+         JOIN GoodTypes gt ON gs.type = gt.good_type_id
+         JOIN Payments ps ON gs.good_id = ps.good
+WHERE good_type_name = 'delicacies'
+ORDER BY unit_price DESC
+LIMIT 1;
+```
+
+---
+
+24. Определить кто и сколько потратил в июне 2005 
+
+
+```mysql
+SELECT member_name,
+       (amount * unit_price) AS costs
+FROM FamilyMembers fm
+         JOIN Payments ps ON fm.member_id = ps.family_member
+WHERE YEAR(date) = 2005
+  AND MONTH(date) = 6;
+```
+
+---
+
+25. Определить, какие товары не покупались в 2005 году 
+
+
+```mysql
+SELECT good_name
+FROM Goods
+WHERE good_id NOT IN (
+    SELECT good
+    FROM Payments
+    WHERE YEAR(date) = 2005
+);
+```
+
+---
+
+26. Определить группы товаров, которые не приобретались в 2005 году 
+
+
+```mysql
+SELECT good_type_name
+FROM GoodTypes
+WHERE good_type_id NOT IN (
+    SELECT type
+    FROM Goods gs
+             JOIN Payments ps ON gs.good_id = ps.good
+    WHERE YEAR(date) = 2005
+    GROUP BY good_id
+);
+```
+
+---
+
+27. Узнать, сколько потрачено на каждую из групп товаров в 2005 году. Вывести название группы и сумму 
+
+
+```mysql
+SELECT good_type_name,
+       SUM(amount * unit_price) AS costs
+FROM GoodTypes gt
+         JOIN Goods gs ON gt.good_type_id = gs.type
+         JOIN Payments ps ON gs.good_id = ps.good
+WHERE YEAR(date) = 2005
+GROUP BY good_type_name;
+```
+
+---
+
+28. Сколько рейсов совершили авиакомпании из Ростова (Rostov) в Москву (Moscow) ? 
+ 
+
+```mysql
+SELECT COUNT(*) AS COUNT
+FROM Trip
+WHERE town_from = 'Rostov'
+  AND town_to = 'Moscow';
+```
+
+---
+
+29. Выведите имена пассажиров улетевших в Москву (Moscow) на самолете TU-134 
+
+
+```mysql
+SELECT name
+FROM Passenger ps
+         JOIN Pass_in_trip pt ON ps.id = pt.passenger
+         JOIN Trip tr ON pt.trip = tr.id
+WHERE plane = 'TU-134'
+  AND town_to = 'Moscow'
+GROUP BY name;
+```
+
+---
+
+30. Выведите нагруженность (число пассажиров) каждого рейса (trip). Результат вывести в отсортированном виде по убыванию
+нагруженности.
+
+
+```mysql
+SELECT trip,
+       COUNT(passenger) AS count
+FROM Pass_in_trip
+GROUP BY trip
+ORDER BY count DESC;
 ```
 
 ---
