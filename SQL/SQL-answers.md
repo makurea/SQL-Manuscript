@@ -814,3 +814,323 @@ HAVING COUNT(DISTINCT name) = 2;
 
 ---
 
+61. Выведите список комнат, которые были зарезервированы хотя бы на одни сутки в 12-ую неделю 2020 года. В данной задаче
+в качестве одной недели примите период из семи дней, первый из которых начинается 1 января 2020 года. Например, первая 
+неделя года — 1–7 января, а третья — 15–21 января. 
+
+
+```mysql
+SELECT Rooms.*
+FROM Reservations
+         JOIN Rooms ON Rooms.id = Reservations.room_id
+WHERE WEEK(start_date, 1) = 12
+  AND YEAR(start_date) = 2020;
+```
+
+---
+
+62. Вывести в порядке убывания популярности доменные имена 2-го уровня, используемые пользователями для электронной 
+почты. Полученный результат необходимо дополнительно отсортировать по возрастанию названий доменных имён. 
+
+
+```mysql
+SELECT SUBSTRING_INDEX(email, '@', -1)        AS domain,
+       COUNT(substring_index(email, '@', -1)) AS count
+FROM Users
+GROUP BY domain
+ORDER BY count DESC,
+         domain;
+```
+
+---
+
+63. Выведите отсортированный список (по возрастанию) фамилий и имен студентов в виде Фамилия.И. 
+
+
+```mysql
+SELECT CONCAT(last_name, '.', LEFT(first_name, 1), '.') AS name
+FROM Student
+ORDER BY name;
+```
+
+---
+
+64. Вывести количество бронирований по каждому месяцу каждого года, в которых было хотя бы 1 бронирование. Результат 
+отсортируйте в порядке возрастания даты бронирования. 
+
+
+```mysql
+SELECT YEAR(start_date)  AS year,
+       MONTH(start_date) AS month,
+       COUNT(*)          AS amount
+FROM Reservations
+GROUP BY YEAR(start_date),
+         MONTH(start_date)
+ORDER BY year,
+         month;
+```
+
+---
+
+65. Необходимо вывести рейтинг для комнат, которые хоть раз арендовали, как среднее значение рейтинга отзывов 
+округленное до целого вниз. 
+
+
+```mysql
+SELECT room_id,
+       FLOOR(AVG(rating)) AS rating
+FROM Reservations rs
+         JOIN Reviews rw ON rw.reservation_id = rs.id
+GROUP BY room_id;
+```
+
+---
+
+66. Вывести список комнат со всеми удобствами (наличие ТВ, интернета, кухни и кондиционера), а также общее количество 
+дней и сумму за все дни аренды каждой из таких комнат. 
+
+
+```mysql
+SELECT home_type,
+       address,
+       IFNULL(SUM(total / rs.price), 0) AS days,
+       IFNULL(SUM(total), 0)            AS total_fee
+FROM Rooms rm
+         LEFT JOIN Reservations rs ON rs.room_id = rm.id
+WHERE has_tv = 1
+  AND has_internet = 1
+  AND has_kitchen = 1
+  AND has_air_con = 1
+GROUP BY home_type,
+         address;
+```
+
+---
+
+67. Вывести время отлета и время прилета для каждого перелета в формате "ЧЧ:ММ, ДД.ММ - ЧЧ:ММ, ДД.ММ", где часы и минуты
+с ведущим нулем, а день и месяц без. 
+
+
+```mysql
+SELECT CONCAT(
+               DATE_FORMAT(time_out, '%H:%i, %e.%c'),
+               ' - ',
+               DATE_FORMAT(time_in, '%H:%i, %e.%c')
+           ) AS flight_time
+FROM Trip;
+```
+
+---
+
+68. Для каждой комнаты, которую снимали как минимум 1 раз, найдите имя человека, снимавшего ее последний раз, и дату, 
+когда он выехал 
+
+
+```mysql
+SELECT rs.room_id,
+       name,
+       date AS end_date
+FROM (
+         SELECT room_id,
+                MAX(end_date) AS date
+         FROM Reservations
+         GROUP BY room_id
+     ) rs
+         JOIN Reservations rsv ON rs.room_id = rsv.room_id
+    AND rs.date = rsv.end_date
+         JOIN Users us ON rsv.user_id = us.id;
+```
+
+---
+
+69. Вывести идентификаторы всех владельцев комнат, что размещены на сервисе бронирования жилья и сумму, которую они 
+заработали 
+
+
+```mysql
+SELECT owner_id,
+       IFNULL(SUM(total), 0) AS total_earn
+FROM Rooms rm
+         LEFT JOIN Reservations rs ON rm.id = rs.room_id
+GROUP BY owner_id;
+```
+
+---
+
+70. Необходимо категоризовать жилье на economy, comfort, premium по цене соответственно <= 100,
+100 < цена < 200, >= 200. В качестве результата вывести таблицу с названием категории и количеством жилья, попадающего в
+данную категорию 
+
+
+```mysql
+SELECT CASE
+           WHEN price <= 100 THEN 'economy'
+           WHEN price > 100
+               AND price < 200 THEN 'comfort'
+           WHEN price >= 200 THEN 'premium'
+           END      AS category,
+       COUNT(price) AS count
+FROM Rooms
+GROUP BY category;
+```
+
+---
+
+71. Найдите какой процент пользователей, зарегистрированных на сервисе бронирования, хоть раз арендовали или сдавали в 
+аренду жилье. Результат округлите до сотых. 
+
+
+```mysql
+SELECT ROUND(
+                       (
+                           SELECT COUNT(*)
+                           FROM (
+                                    SELECT DISTINCT owner_id
+                                    FROM Rooms rm
+                                             JOIN Reservations rs ON rm.id = rs.room_id
+                                    UNION
+                                    SELECT user_id
+                                    FROM Reservations
+                                ) active_users
+                       ) * 100 / (
+                           SELECT COUNT(*)
+                           FROM Users
+                       ),
+                       2
+           ) AS percent;
+```
+
+---
+
+72. Выведите среднюю стоимость бронирования для комнат, которых бронировали хотя бы один раз. Среднюю стоимость 
+необходимо округлить до целого значения вверх. 
+
+
+```mysql
+SELECT room_id,
+       CEILING(AVG(price)) AS avg_price
+FROM Reservations
+GROUP BY room_id;
+```
+
+---
+
+73. Выведите id тех комнат, которые арендовали нечетное количество раз 
+
+
+```mysql
+SELECT room_id,
+       COUNT(*) AS count
+FROM Reservations
+GROUP BY room_id
+HAVING count % 2 != 0;
+```
+
+---
+
+74. Выведите идентификатор и признак наличия интернета в помещении. Если интернет в сдаваемом жилье присутствует, то 
+выведите «YES», иначе «NO». 
+
+
+```mysql
+SELECT id,
+       IF(has_internet = 1, 'YES', 'NO') AS has_internet
+FROM Rooms;
+```
+
+---
+
+75. Выведите фамилию, имя и дату рождения студентов, кто был рожден в мае. 
+
+
+```mysql
+SELECT last_name,
+       first_name,
+       birthday
+FROM Student
+WHERE MONTHNAME(birthday) = 'May';
+```
+
+---
+
+76. Вывести имена всех пользователей сервиса бронирования жилья, а также два признака: является ли пользователь 
+собственником какого-либо жилья (is_owner) и является ли пользователь арендатором (is_tenant). В случае наличия у 
+пользователя признака необходимо вывести в соответствующее поле 1, иначе 0. 
+
+
+```mysql
+SELECT name,
+       IF(
+                   id IN (
+                   SELECT owner_id
+                   FROM Rooms
+               ),
+                   1,
+                   0
+           ) AS is_owner,
+       IF(
+                   id IN (
+                   SELECT user_id
+                   FROM Reservations
+               ),
+                   1,
+                   0
+           ) AS is_tenant
+FROM Users;
+```
+
+---
+
+77. Создайте представление с именем "People", которое будет содержать список имен (first_name) и фамилий (last_name) 
+всех студентов (Student) и преподавателей(Teacher) 
+
+
+```mysql
+CREATE VIEW People AS
+SELECT first_name,
+       last_name
+FROM Student
+UNION
+SELECT first_name,
+       last_name
+FROM Teacher;
+```
+
+---
+
+78. Выведите всех пользователей с электронной почтой в «hotmail.com» 
+
+
+```mysql
+SELECT *
+FROM Users
+WHERE email RLIKE '@hotmail.com';
+```
+
+---
+
+79. Выведите поля id, home_type, price у всех комнат из таблицы Rooms. Если комната имеет телевизор и интернет 
+одновременно, то в качестве цены в поле price выведите цену, применив скидку 10% 
+
+
+```mysql
+SELECT id,
+       home_type,
+       IF(has_tv AND has_internet, price * 0.9, price) AS price
+FROM Rooms;
+```
+
+---
+
+80. Создайте представление «Verified_Users» с полями id, name и email, которое будет показывает только тех 
+пользователей, у которых подтвержден адрес электронной почты.
+
+
+```mysql
+CREATE VIEW Verified_Users AS
+SELECT id, name, email
+FROM Users
+WHERE email_verified_at IS NOT NULL;
+```
+
+---
