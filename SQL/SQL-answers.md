@@ -92,6 +92,7 @@ WHERE town_from = 'Paris';
 
 9. Какие компании организуют перелеты из Владивостока (Vladivostok)?
 
+
 ```mysql
 SELECT name
 FROM trip tr
@@ -110,6 +111,148 @@ FROM trip
 WHERE DATE(time_out) = '1900-01-01'
   AND TIME_FORMAT(time_out, '%H:%i') >= '10:00'
   AND TIME_FORMAT(time_out, '%H:%i') <= '14:00';
+```
+
+---
+
+11. Выведите пассажиров с самым длинным ФИО. Пробелы, дефисы и точки считаются частью имени.
+
+
+```mysql
+SELECT name
+FROM passenger
+WHERE LENGTH(name) = (
+    SELECT MAX(LENGTH(name))
+    FROM passenger);
+```
+
+---
+
+12. Вывести id и количество пассажиров для всех прошедших полётов 
+
+
+```mysql
+SELECT trip,
+       COUNT(*) AS count
+FROM passenger ps
+         JOIN Pass_in_trip pt ON ps.id = pt.passenger
+GROUP BY trip;
+```
+
+---
+
+13. Вывести имена людей, у которых есть полный тёзка среди пассажиров
+
+
+```mysql
+SELECT name
+FROM passenger
+GROUP BY name
+HAVING COUNT(*) > 1;
+```
+
+---
+
+14. В какие города летал Bruce Willis
+
+
+```mysql
+SELECT town_to
+FROM passenger ps
+         JOIN Pass_in_trip pt ON ps.id = pt.passenger
+         JOIN trip tr ON tr.id = pt.trip
+WHERE name = 'Bruce Willis';
+```
+
+---
+
+15. Выведите дату и время прилёта пассажира Стив Мартин (Steve Martin) в Лондон (London) 
+
+
+```mysql
+SELECT time_in
+FROM trip tr
+         JOIN Pass_in_trip pt ON tr.id = pt.trip
+         JOIN passenger ps ON pt.passenger = ps.id
+WHERE name = 'Steve Martin'
+  AND town_to = 'London';
+```
+
+---
+
+16. Вывести отсортированный по количеству перелетов (по убыванию) и имени (по возрастанию) список пассажиров, 
+совершивших хотя бы 1 полет. 
+
+
+```mysql
+SELECT name,
+       COUNT(name) AS count
+FROM passenger ps
+         JOIN Pass_in_trip pt ON ps.id = pt.passenger
+         JOIN trip tr ON pt.trip = tr.id
+GROUP BY name
+ORDER BY count DESC,
+         name ASC;
+```
+
+---
+
+17. Определить, сколько потратил в 2005 году каждый из членов семьи. В результирующей выборке не выводите тех членов 
+семьи, которые ничего не потратили.  
+
+
+```mysql
+SELECT member_name,
+       status,
+       SUM(unit_price * amount) AS costs
+FROM FamilyMembers fm
+         JOIN Payments ps ON fm.member_id = ps.family_member
+WHERE YEAR(DATE) = 2005
+GROUP BY member_name,
+         status;
+```
+
+---
+
+18. Узнать, кто старше всех в семьe 
+
+
+```mysql
+SELECT member_name
+FROM FamilyMembers
+ORDER BY birthday ASC
+LIMIT 1;
+```
+
+---
+
+19. Определить, кто из членов семьи покупал картошку (potato) [(сайт)](https://sql-academy.org/ru/trainer/tasks/19)
+
+
+```mysql
+SELECT status
+FROM FamilyMembers fm
+         JOIN Payments ps ON fm.member_id = ps.family_member
+         JOIN Goods gs ON ps.good = gs.good_id
+WHERE good_name = 'potato'
+GROUP BY status;
+```
+
+---
+
+20. Сколько и кто из семьи потратил на развлечения (entertainment). Вывести статус в семье, имя, сумму 
+
+
+```mysql
+SELECT status,
+       member_name,
+       SUM(amount * unit_price) AS costs
+FROM FamilyMembers fm
+         JOIN Payments ps ON fm.member_id = ps.family_member
+         JOIN Goods gs ON ps.good = gs.good_id
+         JOIN GoodTypes gt ON gs.type = gt.good_type_id
+WHERE good_type_name = 'entertainment'
+GROUP BY status, member_name;
 ```
 
 ---
